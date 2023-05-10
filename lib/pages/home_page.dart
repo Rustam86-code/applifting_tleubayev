@@ -1,38 +1,81 @@
+import 'package:applifting_tleubayev/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_with_http_searcher/provider/provider.dart';
-import 'package:flutter_with_http_searcher/widgets/widgets.dart';
-import 'package:flutter_with_http_searcher/widgets/widgets.dart';
 
-import '../pages/past_launches_page.dart';
-import '../pages/upcoming_launches_page.dart';
+import '../pages/crew_page.dart';
+import '../pages/launches_page.dart';
+import '../pages/ships_page.dart';
 
-class HomePage extends HookWidget {
-  const HomePage({super.key});
+final indexProvider = StateNotifierProvider((ref) => BottomBarStateNotifier());
 
-  static const routeName = '/home';
+class HomePage extends ConsumerWidget {
+  HomePage({super.key});
 
   static Route route() {
     return MaterialPageRoute(
-      settings: const RouteSettings(name: routeName),
-      builder: (_) => const HomePage(),
+      builder: (_) => HomePage(),
     );
   }
 
+  final List<Widget> pages = [LaunchesPage(), CrewPage(), ShipsPage()];
+
+  final List<BottomNavigationBarItem> navItems = [
+    const BottomNavigationBarItem(
+      icon: Icon(
+        Icons.rocket_launch,
+        color: Colors.black,
+      ),
+      label: 'launch',
+    ),
+    const BottomNavigationBarItem(
+      icon: Icon(
+        Icons.circle_notifications_outlined,
+        color: Colors.black,
+      ),
+      label: 'crew',
+    ),
+    const BottomNavigationBarItem(
+      icon: Icon(
+        Icons.directions_boat_filled,
+        color: Colors.black,
+      ),
+      label: 'ships',
+    ),
+  ];
+
   @override
-  Widget build(BuildContext context) {
-    return const FocusAbsorber(
+  Widget build(context, ref) {
+    final pageController = PageController();
+    final int menuIndex = ref.watch(indexProvider) as int;
+    return FocusAbsorber(
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
-          bottomNavigationBar: AppButtonNavigationBar(),
-          body: TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            children: [
-              PastLaunchesPage(),
-              UpcomingLaunchesPage(),
-            ],
+          appBar: AppBar(
+            title: const Text(
+              'Applifting Spacex',
+              style: TextStyle(fontFamily: 'Bruno'),
+            ),
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: menuIndex,
+            items: navItems,
+            onTap: (int i) {
+              ref.read(indexProvider.notifier).value = i;
+              pageController.animateToPage(i,
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.easeInOut);
+            },
+            selectedItemColor: Colors.red,
+            unselectedItemColor: Colors.black,
+            backgroundColor: Colors.blueGrey,
+          ),
+          body: SafeArea(
+            child: PageView(
+              controller: pageController,
+              children: pages,
+              onPageChanged: (i) => ref.read(indexProvider.notifier).value = i,
+            ),
           ),
         ),
       ),
